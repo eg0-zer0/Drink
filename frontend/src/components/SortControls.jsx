@@ -6,7 +6,7 @@ import { ArrowUpDown, TrendingUp, DollarSign, AlphabeticallyIcon } from 'lucide-
 
 const SortControls = ({ sortBy, onSortChange }) => {
   const sortOptions = [
-    { value: 'name', label: 'Alphabétique', icon: SortAlphabetical },
+    { value: 'name', label: 'Alphabétique', icon: AlphabeticallyIcon },
     { value: 'popularity', label: 'Popularité', icon: TrendingUp },
     { value: 'price-asc', label: 'Prix ↗', icon: DollarSign },
     { value: 'price-desc', label: 'Prix ↘', icon: DollarSign },
