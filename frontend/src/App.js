@@ -21,6 +21,7 @@ const DrinkOrderApp = () => {
   const [categories, setCategories] = useState(mockCategories);
   const [orders, setOrders] = useState([]);
   const [orderHistory, setOrderHistory] = useState(mockOrderHistory);
+  const [sortBy, setSortBy] = useState('name');
   
   // Modals state
   const [editDrinkModal, setEditDrinkModal] = useState({ 
@@ -37,9 +38,47 @@ const DrinkOrderApp = () => {
     categoryId: null
   });
 
-  // Calculs pour les statistiques (maintenant utilisés seulement dans OrderSummary)
-  const totalOrders = orders.reduce((sum, order) => sum + order.quantity, 0);
-  const totalAmount = orders.reduce((sum, order) => sum + (order.price * order.quantity), 0);
+  // Calculer la popularité des boissons basée sur l'historique
+  const drinkPopularity = useMemo(() => {
+    const popularity = {};
+    
+    orderHistory.forEach(order => {
+      order.items.forEach(item => {
+        const drinkName = item.drinkName;
+        if (!popularity[drinkName]) {
+          popularity[drinkName] = 0;
+        }
+        popularity[drinkName] += item.quantity;
+      });
+    });
+    
+    // Convertir par ID de boisson
+    const popularityById = {};
+    categories.forEach(category => {
+      category.drinks.forEach(drink => {
+        popularityById[drink.id] = popularity[drink.name] || 0;
+      });
+    });
+    
+    return popularityById;
+  }, [orderHistory, categories]);
+
+  // Fonction de tri des boissons
+  const sortDrinks = (drinks, sortBy) => {
+    const sorted = [...drinks];
+    
+    switch (sortBy) {
+      case 'popularity':
+        return sorted.sort((a, b) => (drinkPopularity[b.id] || 0) - (drinkPopularity[a.id] || 0));
+      case 'price-asc':
+        return sorted.sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.price - a.price);
+      case 'name':
+      default:
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  };
 
   const handleAddDrink = (drink) => {
     const existingOrderIndex = orders.findIndex(order => order.drinkId === drink.id);
