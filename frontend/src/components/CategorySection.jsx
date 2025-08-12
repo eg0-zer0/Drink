@@ -5,7 +5,20 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, onEditCategory, onAddDrinkToCategory, onDeleteCategory, onDeleteDrink }) => {
+const CategorySection = ({ 
+  category, 
+  onAddDrink, 
+  onEditDrink, 
+  onToggleCategory, 
+  onEditCategory, 
+  onAddDrinkToCategory, 
+  onDeleteCategory, 
+  onDeleteDrink,
+  sortedDrinks = [],
+  drinkPopularity = {}
+}) => {
+  const drinksToShow = sortedDrinks.length > 0 ? sortedDrinks : category.drinks;
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -14,7 +27,7 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
             variant="ghost"
             size="sm"
             onClick={() => onToggleCategory(category.id)}
-            className="p-1 h-8"
+            className="p-1 h-8 dark:hover:bg-gray-700"
           >
             {category.isCollapsed ? (
               <ChevronRight className="w-4 h-4" />
@@ -24,8 +37,8 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
           </Button>
           
           <span className="text-2xl">{category.icon}</span>
-          <h2 className="text-xl font-bold text-gray-800">{category.name}</h2>
-          <Badge className={`${category.color} border-0`}>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">{category.name}</h2>
+          <Badge className={`${category.color} border-0 dark:bg-opacity-80`}>
             {category.drinks.length} boissons
           </Badge>
         </div>
@@ -35,7 +48,7 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
             variant="outline"
             size="sm"
             onClick={() => onAddDrinkToCategory(category.id)}
-            className="text-xs"
+            className="text-xs dark:border-gray-600 dark:hover:bg-gray-700"
           >
             <Plus className="w-3 h-3 mr-1" />
             Ajouter
@@ -43,18 +56,18 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-xs">
+              <Button variant="ghost" size="sm" className="text-xs dark:hover:bg-gray-700">
                 <Edit className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEditCategory(category)}>
+            <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+              <DropdownMenuItem onClick={() => onEditCategory(category)} className="dark:hover:bg-gray-700">
                 <Edit className="w-3 h-3 mr-2" />
                 Modifier
               </DropdownMenuItem>
               <DropdownMenuItem 
                 onClick={() => onDeleteCategory(category)}
-                className="text-red-600 focus:text-red-600"
+                className="text-red-600 focus:text-red-600 dark:text-red-400 dark:hover:bg-gray-700"
               >
                 <Trash2 className="w-3 h-3 mr-2" />
                 Supprimer
@@ -65,8 +78,8 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
       </div>
       
       {!category.isCollapsed && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
-          {category.drinks.map((drink) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+          {drinksToShow.map((drink) => (
             <DrinkCard
               key={drink.id}
               drink={drink}
@@ -74,6 +87,7 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
               onAdd={onAddDrink}
               onEdit={onEditDrink}
               onDelete={onDeleteDrink}
+              popularityScore={drinkPopularity[drink.id] || 0}
             />
           ))}
         </div>
