@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { History, Calendar, Receipt } from 'lucide-react';
+import ShareButtons from './ShareButtons';
 
 const OrderHistory = ({ orderHistory }) => {
   const formatDate = (dateString) => {
@@ -65,12 +66,17 @@ const OrderHistory = ({ orderHistory }) => {
               ))}
             </div>
             
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+            <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200">
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Receipt className="w-3 h-3" />
                 {order.items.reduce((sum, item) => sum + item.quantity, 0)} articles
               </div>
               <span className="font-semibold text-sm">Total: {order.total.toFixed(2)}€</span>
+            </div>
+            
+            {/* Share button for historical order */}
+            <div className="flex justify-center mt-3 pt-2 border-t border-gray-200">
+              <ShareButtons order={order} isCurrentOrder={false} />
             </div>
           </div>
         ))}

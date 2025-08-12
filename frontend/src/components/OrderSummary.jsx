@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Trash2, Minus, Plus, Receipt, ShoppingCart } from 'lucide-react';
+import ShareButtons from './ShareButtons';
 
 const OrderSummary = ({ orders, onUpdateQuantity, onRemoveItem, onClearAll, onConfirmOrder }) => {
   const totalAmount = orders.reduce((sum, order) => sum + (order.price * order.quantity), 0);
@@ -106,6 +107,13 @@ const OrderSummary = ({ orders, onUpdateQuantity, onRemoveItem, onClearAll, onCo
           >
             <Trash2 className="w-4 h-4" />
           </Button>
+        </div>
+        
+        {/* Share buttons for current order */}
+        <div className="pt-2 border-t">
+          <div className="flex justify-center">
+            <ShareButtons order={orders} isCurrentOrder={true} />
+          </div>
         </div>
       </CardContent>
     </Card>
