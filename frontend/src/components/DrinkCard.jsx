@@ -2,29 +2,47 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Plus } from 'lucide-react';
+import { Plus, Edit, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-const DrinkCard = ({ drink, onAdd, categoryColor }) => {
+const DrinkCard = ({ drink, onAdd, categoryColor, onEdit }) => {
   return (
-    <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-1">
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-3">
-          <div className="flex-1">
-            <h3 className="font-semibold text-lg text-gray-800">{drink.name}</h3>
-            <p className="text-2xl font-bold text-gray-900 mt-1">{drink.price.toFixed(2)}€</p>
+    <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative">
+      <CardContent className="p-3">
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-gray-800 truncate">{drink.name}</h3>
+            <p className="text-lg font-bold text-gray-900">{drink.price.toFixed(2)}€</p>
           </div>
-          <Badge className={`${categoryColor} border-0`}>
-            {drink.available ? 'Disponible' : 'Indisponible'}
-          </Badge>
+          
+          <div className="flex items-center gap-1">
+            <Badge className={`${categoryColor} border-0 text-xs`}>
+              {drink.available ? 'Dispo' : 'Indispo'}
+            </Badge>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <MoreHorizontal className="w-3 h-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(drink)}>
+                  <Edit className="w-3 h-3 mr-2" />
+                  Modifier
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         
         <Button 
           onClick={() => onAdd(drink)}
           disabled={!drink.available}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0"
+          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0 text-xs h-7"
           size="sm"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus className="w-3 h-3 mr-1" />
           Ajouter
         </Button>
       </CardContent>
