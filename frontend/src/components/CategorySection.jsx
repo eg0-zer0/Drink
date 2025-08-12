@@ -5,7 +5,7 @@ import { Button } from './ui/button';
 import { ChevronDown, ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, onEditCategory, onAddDrinkToCategory, onDeleteCategory }) => {
+const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, onEditCategory, onAddDrinkToCategory, onDeleteCategory, onDeleteDrink }) => {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
