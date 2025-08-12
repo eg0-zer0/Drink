@@ -304,7 +304,7 @@ const DrinkOrderApp = () => {
                 onToggleCategory={handleToggleCategory}
                 onEditCategory={handleEditCategory}
                 onAddDrinkToCategory={handleAddDrinkToCategory}
-                onDeleteCategory={handleDeleteCategory}
+                onDeleteDrink={handleDeleteDrink}
               />
             ))}
           </div>
