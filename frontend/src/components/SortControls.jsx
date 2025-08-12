@@ -2,7 +2,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { ArrowUpDown, TrendingUp, AlphabeticallyIcon as SortAlphabetical, DollarSign } from 'lucide-react';
+import { ArrowUpDown, TrendingUp, DollarSign, AlphabeticallyIcon } from 'lucide-react';
 
 const SortControls = ({ sortBy, onSortChange }) => {
   const sortOptions = [
