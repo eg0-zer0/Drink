@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { useToast } from './hooks/use-toast';
 import { Button } from './components/ui/button';
 import { Plus } from 'lucide-react';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { mockCategories, mockOrderHistory } from './mock';
 import Header from './components/Header';
 import CategorySection from './components/CategorySection';
@@ -12,6 +13,7 @@ import OrderHistory from './components/OrderHistory';
 import EditDrinkModal from './components/EditDrinkModal';
 import EditCategoryModal from './components/EditCategoryModal';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
+import SortControls from './components/SortControls';
 import './App.css';
 
 const DrinkOrderApp = () => {
