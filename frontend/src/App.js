@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
 import { useToast } from './hooks/use-toast';
+import { Button } from './components/ui/button';
+import { Plus } from 'lucide-react';
 import { mockCategories, mockOrderHistory } from './mock';
 import Header from './components/Header';
 import CategorySection from './components/CategorySection';
@@ -9,6 +11,7 @@ import OrderSummary from './components/OrderSummary';
 import OrderHistory from './components/OrderHistory';
 import EditDrinkModal from './components/EditDrinkModal';
 import EditCategoryModal from './components/EditCategoryModal';
+import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import './App.css';
 
 const DrinkOrderApp = () => {
@@ -18,10 +21,21 @@ const DrinkOrderApp = () => {
   const [orderHistory, setOrderHistory] = useState(mockOrderHistory);
   
   // Modals state
-  const [editDrinkModal, setEditDrinkModal] = useState({ isOpen: false, drink: null, categoryId: null });
+  const [editDrinkModal, setEditDrinkModal] = useState({ 
+    isOpen: false, 
+    drink: null, 
+    categoryId: null, 
+    mode: 'edit' 
+  });
   const [editCategoryModal, setEditCategoryModal] = useState({ isOpen: false, category: null });
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    type: null, // 'drink' or 'category'
+    item: null,
+    categoryId: null
+  });
 
-  // Calculs pour les statistiques
+  // Calculs pour les statistiques (maintenant utilisés seulement dans OrderSummary)
   const totalOrders = orders.reduce((sum, order) => sum + order.quantity, 0);
   const totalAmount = orders.reduce((sum, order) => sum + (order.price * order.quantity), 0);
 
@@ -111,25 +125,83 @@ const DrinkOrderApp = () => {
     setCategories(updatedCategories);
   };
 
-  const handleEditDrink = (drink) => {
+  const handleEditDrink = (drink, mode = 'edit') => {
     // Find category
     const category = categories.find(cat => cat.drinks.some(d => d.id === drink.id));
-    setEditDrinkModal({ isOpen: true, drink, categoryId: category?.id });
+    setEditDrinkModal({ 
+      isOpen: true, 
+      drink, 
+      categoryId: category?.id, 
+      mode 
+    });
+  };
+
+  const handleDeleteDrink = (drink) => {
+    const category = categories.find(cat => cat.drinks.some(d => d.id === drink.id));
+    setDeleteDialog({
+      isOpen: true,
+      type: 'drink',
+      item: drink,
+      categoryId: category?.id
+    });
+  };
+
+  const confirmDeleteDrink = () => {
+    const { item: drink, categoryId } = deleteDialog;
+    
+    const updatedCategories = categories.map(category => 
+      category.id === categoryId
+        ? {
+            ...category,
+            drinks: category.drinks.filter(d => d.id !== drink.id)
+          }
+        : category
+    );
+    
+    setCategories(updatedCategories);
+    setDeleteDialog({ isOpen: false, type: null, item: null, categoryId: null });
+    
+    toast({
+      title: "Boisson supprimée",
+      description: `${drink.name} a été supprimé du menu`,
+    });
   };
 
   const handleSaveDrink = (updatedDrink) => {
-    const updatedCategories = categories.map(category => ({
-      ...category,
-      drinks: category.drinks.map(drink => 
-        drink.id === updatedDrink.id ? updatedDrink : drink
-      )
-    }));
-    setCategories(updatedCategories);
-    
-    toast({
-      title: "Boisson modifiée",
-      description: `${updatedDrink.name} a été mise à jour`,
-    });
+    if (editDrinkModal.mode === 'add' || (updatedDrink.id && updatedDrink.id.startsWith('custom-'))) {
+      // Ajouter nouvelle boisson
+      const updatedCategories = categories.map(category => 
+        category.id === editDrinkModal.categoryId
+          ? { 
+              ...category, 
+              drinks: [...category.drinks, { 
+                ...updatedDrink, 
+                id: updatedDrink.id || `custom-${Date.now()}` 
+              }] 
+            }
+          : category
+      );
+      setCategories(updatedCategories);
+      
+      toast({
+        title: "Boisson ajoutée",
+        description: `${updatedDrink.name} a été ajouté au menu`,
+      });
+    } else {
+      // Modifier boisson existante
+      const updatedCategories = categories.map(category => ({
+        ...category,
+        drinks: category.drinks.map(drink => 
+          drink.id === updatedDrink.id ? updatedDrink : drink
+        )
+      }));
+      setCategories(updatedCategories);
+      
+      toast({
+        title: "Boisson modifiée",
+        description: `${updatedDrink.name} a été mise à jour`,
+      });
+    }
   };
 
   const handleAddDrinkToCategory = (categoryId) => {
@@ -139,20 +211,11 @@ const DrinkOrderApp = () => {
       price: 0,
       available: true,
     };
-    setEditDrinkModal({ isOpen: true, drink: newDrink, categoryId });
-  };
-
-  const handleSaveNewDrink = (newDrink) => {
-    const updatedCategories = categories.map(category => 
-      category.id === editDrinkModal.categoryId
-        ? { ...category, drinks: [...category.drinks, newDrink] }
-        : category
-    );
-    setCategories(updatedCategories);
-    
-    toast({
-      title: "Boisson ajoutée",
-      description: `${newDrink.name} a été ajouté au menu`,
+    setEditDrinkModal({ 
+      isOpen: true, 
+      drink: newDrink, 
+      categoryId, 
+      mode: 'add' 
     });
   };
 
@@ -160,8 +223,30 @@ const DrinkOrderApp = () => {
     setEditCategoryModal({ isOpen: true, category });
   };
 
+  const handleDeleteCategory = (category) => {
+    setDeleteDialog({
+      isOpen: true,
+      type: 'category',
+      item: category,
+      categoryId: null
+    });
+  };
+
+  const confirmDeleteCategory = () => {
+    const category = deleteDialog.item;
+    
+    const updatedCategories = categories.filter(cat => cat.id !== category.id);
+    setCategories(updatedCategories);
+    setDeleteDialog({ isOpen: false, type: null, item: null, categoryId: null });
+    
+    toast({
+      title: "Catégorie supprimée",
+      description: `${category.name} et tous ses articles ont été supprimés`,
+    });
+  };
+
   const handleSaveCategory = (updatedCategory) => {
-    if (updatedCategory.id) {
+    if (updatedCategory.id && categories.find(cat => cat.id === updatedCategory.id)) {
       // Modifier catégorie existante
       const updatedCategories = categories.map(category => 
         category.id === updatedCategory.id ? updatedCategory : category
@@ -195,15 +280,20 @@ const DrinkOrderApp = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <Header 
-          totalOrders={totalOrders} 
-          totalAmount={totalAmount} 
-          onAddCategory={handleAddCategory}
-        />
+        <Header />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-2xl font-bold text-gray-800">Menu des Boissons</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-800">Menu des Boissons</h2>
+              <Button
+                onClick={handleAddCategory}
+                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvelle catégorie
+              </Button>
+            </div>
             
             {categories.map((category) => (
               <CategorySection
@@ -214,6 +304,7 @@ const DrinkOrderApp = () => {
                 onToggleCategory={handleToggleCategory}
                 onEditCategory={handleEditCategory}
                 onAddDrinkToCategory={handleAddDrinkToCategory}
+                onDeleteCategory={handleDeleteCategory}
               />
             ))}
           </div>
@@ -236,8 +327,9 @@ const DrinkOrderApp = () => {
       <EditDrinkModal
         drink={editDrinkModal.drink}
         isOpen={editDrinkModal.isOpen}
-        onClose={() => setEditDrinkModal({ isOpen: false, drink: null, categoryId: null })}
-        onSave={editDrinkModal.drink?.id && editDrinkModal.drink.id.startsWith('custom-') ? handleSaveNewDrink : handleSaveDrink}
+        mode={editDrinkModal.mode}
+        onClose={() => setEditDrinkModal({ isOpen: false, drink: null, categoryId: null, mode: 'edit' })}
+        onSave={handleSaveDrink}
       />
       
       <EditCategoryModal
@@ -245,6 +337,21 @@ const DrinkOrderApp = () => {
         isOpen={editCategoryModal.isOpen}
         onClose={() => setEditCategoryModal({ isOpen: false, category: null })}
         onSave={handleSaveCategory}
+      />
+      
+      <DeleteConfirmDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, type: null, item: null, categoryId: null })}
+        onConfirm={deleteDialog.type === 'drink' ? confirmDeleteDrink : confirmDeleteCategory}
+        title={deleteDialog.type === 'drink' 
+          ? "Supprimer la boisson" 
+          : "Supprimer la catégorie"
+        }
+        description={
+          deleteDialog.type === 'drink'
+            ? `Êtes-vous sûr de vouloir supprimer "${deleteDialog.item?.name}" ? Cette action est irréversible.`
+            : `Êtes-vous sûr de vouloir supprimer "${deleteDialog.item?.name}" ? Tous les articles de cette catégorie (${deleteDialog.item?.drinks?.length || 0} articles) seront également supprimés. Cette action est irréversible.`
+        }
       />
       
       <Toaster />
