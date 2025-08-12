@@ -137,6 +137,7 @@ const DrinkOrderApp = () => {
   const handleConfirmOrder = () => {
     if (orders.length === 0) return;
 
+    const totalAmount = orders.reduce((sum, order) => sum + (order.price * order.quantity), 0);
     const newOrder = {
       id: `order-${Date.now()}`,
       date: new Date().toISOString(),
