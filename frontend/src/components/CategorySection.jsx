@@ -2,9 +2,10 @@ import React from 'react';
 import DrinkCard from './DrinkCard';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { ChevronDown, ChevronRight, Edit, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit, Plus, Trash2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, onEditCategory, onAddDrinkToCategory }) => {
+const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, onEditCategory, onAddDrinkToCategory, onDeleteCategory }) => {
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -39,14 +40,27 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
             <Plus className="w-3 h-3 mr-1" />
             Ajouter
           </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEditCategory(category)}
-            className="text-xs"
-          >
-            <Edit className="w-3 h-3" />
-          </Button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-xs">
+                <Edit className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onEditCategory(category)}>
+                <Edit className="w-3 h-3 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onDeleteCategory(category)}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="w-3 h-3 mr-2" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -59,6 +73,7 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
               categoryColor={category.color}
               onAdd={onAddDrink}
               onEdit={onEditDrink}
+              onDelete={onEditDrink} // Will be updated to handle deletion
             />
           ))}
         </div>

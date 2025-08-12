@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Switch } from './ui/switch';
 
-const EditDrinkModal = ({ drink, isOpen, onClose, onSave }) => {
+const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -35,13 +35,15 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave }) => {
     }
   };
 
+  const isAddMode = mode === 'add' || (drink && drink.id && drink.id.startsWith('custom-'));
+  const title = isAddMode ? 'Ajouter une boisson' : 'Modifier la boisson';
+  const buttonText = isAddMode ? 'Ajouter' : 'Modifier';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {drink?.id ? 'Modifier la boisson' : 'Ajouter une boisson'}
-          </DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -82,9 +84,7 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave }) => {
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit">
-              {drink?.id ? 'Modifier' : 'Ajouter'}
-            </Button>
+            <Button type="submit">{buttonText}</Button>
           </div>
         </form>
       </DialogContent>

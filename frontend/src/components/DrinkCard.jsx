@@ -2,10 +2,10 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Plus, Edit, MoreHorizontal } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
-const DrinkCard = ({ drink, onAdd, categoryColor, onEdit }) => {
+const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete }) => {
   return (
     <Card className="hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative">
       <CardContent className="p-3">
@@ -23,13 +23,20 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit }) => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                  <MoreHorizontal className="w-3 h-3" />
+                  <Edit className="w-3 h-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(drink)}>
+                <DropdownMenuItem onClick={() => onEdit(drink, 'edit')}>
                   <Edit className="w-3 h-3 mr-2" />
                   Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onDelete(drink)}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="w-3 h-3 mr-2" />
+                  Supprimer
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
