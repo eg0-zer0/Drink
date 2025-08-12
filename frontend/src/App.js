@@ -320,21 +320,24 @@ const DrinkOrderApp = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <Header />
         
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-800">Menu des Boissons</h2>
-              <Button
-                onClick={handleAddCategory}
-                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nouvelle catégorie
-              </Button>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Menu des Boissons</h2>
+              <div className="flex flex-wrap items-center gap-3">
+                <SortControls sortBy={sortBy} onSortChange={setSortBy} />
+                <Button
+                  onClick={handleAddCategory}
+                  className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white touch-manipulation"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Nouvelle catégorie
+                </Button>
+              </div>
             </div>
             
             {categories.map((category) => (
@@ -348,11 +351,13 @@ const DrinkOrderApp = () => {
                 onAddDrinkToCategory={handleAddDrinkToCategory}
                 onDeleteCategory={handleDeleteCategory}
                 onDeleteDrink={handleDeleteDrink}
+                sortedDrinks={sortDrinks(category.drinks, sortBy)}
+                drinkPopularity={drinkPopularity}
               />
             ))}
           </div>
           
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-6 hidden lg:block">
             <OrderSummary
               orders={orders}
               onUpdateQuantity={handleUpdateQuantity}
@@ -363,6 +368,17 @@ const DrinkOrderApp = () => {
             
             <OrderHistory orderHistory={orderHistory} />
           </div>
+        </div>
+        
+        {/* Mobile order summary */}
+        <div className="lg:hidden">
+          <OrderSummary
+            orders={orders}
+            onUpdateQuantity={handleUpdateQuantity}
+            onRemoveItem={handleRemoveItem}
+            onClearAll={handleClearAll}
+            onConfirmOrder={handleConfirmOrder}
+          />
         </div>
       </div>
       
