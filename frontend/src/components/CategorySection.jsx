@@ -73,7 +73,7 @@ const CategorySection = ({ category, onAddDrink, onEditDrink, onToggleCategory, 
               categoryColor={category.color}
               onAdd={onAddDrink}
               onEdit={onEditDrink}
-              onDelete={onEditDrink} // Will be updated to handle deletion
+              onDelete={onDeleteDrink}
             />
           ))}
         </div>
