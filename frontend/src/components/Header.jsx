@@ -1,18 +1,28 @@
 import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Coffee, Clock, TrendingUp } from 'lucide-react';
+import { Button } from './ui/button';
+import { Coffee, Clock, TrendingUp, Plus } from 'lucide-react';
 
-const Header = ({ totalOrders, totalAmount }) => {
+const Header = ({ totalOrders, totalAmount, onAddCategory }) => {
   return (
     <div className="mb-8">
-      <div className="text-center mb-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          🍹 Commandes de Boissons
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Gérez facilement vos commandes et celles de vos amis
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-center flex-1">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            🍹 Commandes de Boissons
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Gérez facilement vos commandes de boissons
+          </p>
+        </div>
+        <Button
+          onClick={onAddCategory}
+          className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Nouvelle catégorie
+        </Button>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
