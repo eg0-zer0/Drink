@@ -1,12 +1,10 @@
-// Ajouter l'import en haut
-import InstallPrompt from './components/InstallPrompt';
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from './components/ui/sonner';
-import { useToast } from './hooks/use-toast';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Button } from './components/ui/button';
 import { Plus } from 'lucide-react';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { Toaster } from './components/ui/sonner';
+import { useToast } from './hooks/use-toast';
 import { mockCategories, mockOrderHistory } from './mock';
 import Header from './components/Header';
 import CategorySection from './components/CategorySection';
@@ -16,14 +14,19 @@ import EditDrinkModal from './components/EditDrinkModal';
 import EditCategoryModal from './components/EditCategoryModal';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import SortControls from './components/SortControls';
+import InstallBanner from './components/InstallBanner';
+import InstallPrompt from './components/InstallPrompt';
 import './App.css';
 
+// Ton composant principal
 const DrinkOrderApp = () => {
   const { toast } = useToast();
   const [categories, setCategories] = useState(mockCategories);
   const [orders, setOrders] = useState([]);
   const [orderHistory, setOrderHistory] = useState(mockOrderHistory);
   const [sortBy, setSortBy] = useState('name');
+
+  // ... (tout ton code existant de gestion des boissons et catégories)
   
   // Modals state
   const [editDrinkModal, setEditDrinkModal] = useState({ 
@@ -81,6 +84,34 @@ const DrinkOrderApp = () => {
         return sorted.sort((a, b) => a.name.localeCompare(b.name));
     }
   };
+  // Fonction qui retourne les catégories triées selon le critère
+const getSortedCategories = () => {
+  if (sortBy === 'default') {
+    // Vue par défaut
+    return categories;
+  }
+
+  if (sortBy === 'name') {
+    // Trier boissons par ordre alphabétique dans chaque catégorie
+    return categories.map(category => ({
+      ...category,
+      drinks: [...category.drinks].sort((a, b) => a.name.localeCompare(b.name))
+    }));
+  }
+
+  if (sortBy === 'popularity') {
+    // Calcul de la popularité par ID à partir de drinkPopularity déjà calculé
+    return categories.map(category => ({
+      ...category,
+      drinks: [...category.drinks].sort((a, b) =>
+        (drinkPopularity[b.id] || 0) - (drinkPopularity[a.id] || 0)
+      )
+    }));
+  }
+
+  return categories; // fallback
+};
+
 
   const handleAddDrink = (drink) => {
     const existingOrderIndex = orders.findIndex(order => order.drinkId === drink.id);
@@ -418,22 +449,56 @@ const DrinkOrderApp = () => {
       <Toaster />
     </div>
   );
-};
 
+// ... tout le contenu de DrinkOrderApp ici ...
+
+  return (
+    <div className="container mx-auto p-4">
+      <Header />
+      <CategorySection
+  categories={getSortedCategories()}
+  onEditDrink={handleEditDrink}
+  onDeleteDrink={handleDeleteDrink}
+  onAddDrink={handleAddDrinkToCategory}
+  onToggleCategory={handleToggleCategory}
+  sortBy={sortBy}
+  sortDrinks={sortDrinks}
+/>
+
+
+      <SortControls sortBy={sortBy} setSortBy={setSortBy} />
+
+      <OrderSummary
+        orders={orders}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemoveItem={handleRemoveItem}
+        onClearAll={handleClearAll}
+        onConfirmOrder={handleConfirmOrder}
+      />
+
+      <OrderHistory history={orderHistory} />
+
+      {/* Modals */}
+      <EditDrinkModal {...editDrinkModal} onSave={handleSaveDrink} onClose={() => setEditDrinkModal({ isOpen: false })} />
+      <EditCategoryModal {...editCategoryModal} onSave={handleSaveCategory} onClose={() => setEditCategoryModal({ isOpen: false })} />
+      <DeleteConfirmDialog {...deleteDialog} onConfirm={deleteDialog.type === 'drink' ? confirmDeleteDrink : confirmDeleteCategory} onCancel={() => setDeleteDialog({ isOpen: false })} />
+    </div>
+  );
+}; // ← fermeture correcte de DrinkOrderApp
+
+
+// 🆕 Composant App principal
 function App() {
   return (
     <ThemeProvider>
-     <BrowserRouter>
-      <div className="App">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<DrinkOrderApp />} />
-          </Routes>
-          <InstallPrompt />
-      
-          <Toaster />
-        </BrowserRouter>
-      </div>
+      <BrowserRouter>
+        <InstallBanner />
+        <Routes>
+          <Route path="/" element={<DrinkOrderApp />} />
+        </Routes>
+        <InstallPrompt />
+        <Toaster />
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
