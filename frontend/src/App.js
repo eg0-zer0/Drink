@@ -1,3 +1,5 @@
+// Ajouter l'import en haut
+import InstallPrompt from './components/InstallPrompt';
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from './components/ui/sonner';
@@ -421,11 +423,15 @@ const DrinkOrderApp = () => {
 function App() {
   return (
     <ThemeProvider>
+     <BrowserRouter>
       <div className="App">
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<DrinkOrderApp />} />
           </Routes>
+          <InstallPrompt />
+      
+          <Toaster />
         </BrowserRouter>
       </div>
     </ThemeProvider>
