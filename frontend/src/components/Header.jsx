@@ -1,13 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { usePWA } from '../hooks/usePWA';
-import { Download, Menu, Volume2, VolumeX, Layout, History } from 'lucide-react';
+import { Download, Menu, Volume2, VolumeX, Layout, History, Sun, Moon } from 'lucide-react';
 import { Button } from './ui/button';
-import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../contexts/ThemeContext';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from './ui/dropdown-menu';
 
 const Header = ({
@@ -17,8 +18,11 @@ const Header = ({
   onToggleCompact,
   onShowHistory
 }) => {
-  // Hook PWA pour gérer l'installation
   const { isInstallable, isInstalled, installApp } = usePWA();
+  const { isDark, toggleTheme } = useTheme();
+
+  // État d'ouverture du menu pour gestion fermeture automatique
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="mb-8">
@@ -35,7 +39,6 @@ const Header = ({
 
         {/* Boutons/menu à droite */}
         <div className="ml-4 flex items-center gap-3">
-          {/* Bouton d'installation PWA */}
           {isInstallable && !isInstalled && (
             <Button
               onClick={installApp}
@@ -49,43 +52,70 @@ const Header = ({
           )}
 
           {/* Menu hamburger */}
-          <DropdownMenu>
+          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="p-2">
                 <Menu className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
               {/* Toggle du son */}
-              <DropdownMenuItem onClick={onToggleSound} className="flex items-center gap-2">
-                {soundEnabled ? (
-                  <>
-                    <Volume2 className="h-4 w-4" />
-                    Désactiver le son
-                  </>
-                ) : (
-                  <>
-                    <VolumeX className="h-4 w-4" />
-                    Activer le son
-                  </>
-                )}
+              <DropdownMenuItem asChild>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onToggleSound();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-sm"
+                >
+                  {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  {soundEnabled ? 'Désactiver le son' : 'Activer le son'}
+                </button>
               </DropdownMenuItem>
 
               {/* Toggle compact / large */}
-              <DropdownMenuItem onClick={onToggleCompact} className="flex items-center gap-2">
-                <Layout className="h-4 w-4" />
-                {compactMode ? 'Vue large' : 'Vue compacte'}
+              <DropdownMenuItem asChild>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onToggleCompact();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-sm"
+                >
+                  <Layout className="h-4 w-4" />
+                  {compactMode ? 'Vue large' : 'Vue compacte'}
+                </button>
               </DropdownMenuItem>
 
-              {/* Basculer mode clair / sombre */}
-              <DropdownMenuItem className="flex items-center gap-2">
-                {/* On garde ThemeToggle mais compact */}
-                <ThemeToggle />
-                <span>Mode clair/sombre</span>
+              {/* Toggle clair / sombre */}
+              <DropdownMenuItem asChild>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleTheme();
+                    setMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 w-full px-2 py-1.5 text-sm"
+                >
+                  {isDark ? <Sun className="h-4 w-4 text-yellow-500" /> : <Moon className="h-4 w-4 text-gray-500" />}
+                  {isDark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+                </button>
               </DropdownMenuItem>
+
+              {/* Séparateur visuel bien visible */}
+              <DropdownMenuSeparator className="my-2 h-px bg-gray-300 dark:bg-gray-600" />
 
               {/* Historique */}
-              <DropdownMenuItem onClick={onShowHistory} className="flex items-center gap-2">
+              <DropdownMenuItem
+                onClick={() => {
+                  onShowHistory();
+                  setMenuOpen(false);
+                }}
+                className="flex items-center gap-2"
+              >
                 <History className="h-4 w-4" />
                 Historique commandes
               </DropdownMenuItem>
