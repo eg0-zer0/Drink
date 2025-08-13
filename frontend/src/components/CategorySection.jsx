@@ -21,8 +21,10 @@ const CategorySection = ({
 
   return (
     <div className="mb-6">
+      {/* Header de la catégorie */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
+          {/* Bouton collapse */}
           <Button
             variant="ghost"
             size="sm"
@@ -35,15 +37,22 @@ const CategorySection = ({
               <ChevronDown className="w-4 h-4" />
             )}
           </Button>
-          
+
+          {/* Icône + nom */}
           <span className="text-2xl">{category.icon}</span>
-          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">{category.name}</h2>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            {category.name}
+          </h2>
+
+          {/* Nombre de boissons */}
           <Badge className={`${category.color} border-0 dark:bg-opacity-80`}>
             {category.drinks.length} boissons
           </Badge>
         </div>
-        
+
+        {/* Actions catégorie */}
         <div className="flex items-center gap-2">
+          {/* Ajouter boisson */}
           <Button
             variant="outline"
             size="sm"
@@ -53,7 +62,8 @@ const CategorySection = ({
             <Plus className="w-3 h-3 mr-1" />
             Ajouter
           </Button>
-          
+
+          {/* Menu d’édition catégorie */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="text-xs dark:hover:bg-gray-700">
@@ -76,7 +86,8 @@ const CategorySection = ({
           </DropdownMenu>
         </div>
       </div>
-      
+
+      {/* Liste des boissons */}
       {!category.isCollapsed && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {drinksToShow.map((drink) => (

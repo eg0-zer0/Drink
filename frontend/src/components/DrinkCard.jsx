@@ -1,14 +1,15 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-import { Plus, Edit, Trash2, TrendingUp } from 'lucide-react';
+import { Edit, Trash2, TrendingUp } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularityScore = 0 }) => {
   const [startX, setStartX] = useState(null);
   const [currentX, setCurrentX] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
   const cardRef = useRef(null);
 
   const handleTouchStart = (e) => {
@@ -18,14 +19,14 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularitySc
 
   const handleTouchMove = (e) => {
     if (startX === null) return;
-    
+
     const currentX = e.touches[0].clientX;
     const diffX = startX - currentX;
-    
+
     if (Math.abs(diffX) > 10) {
       setIsDragging(true);
       setCurrentX(currentX);
-      
+
       if (cardRef.current) {
         cardRef.current.style.transform = `translateX(${-Math.min(Math.max(diffX, 0), 100)}px)`;
       }
@@ -35,9 +36,8 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularitySc
   const handleTouchEnd = () => {
     if (isDragging && startX && currentX) {
       const diffX = startX - currentX;
-      
+
       if (diffX > 50) {
-        // Swipe gauche détecté - afficher les options
         setTimeout(() => {
           if (cardRef.current) {
             cardRef.current.style.transform = 'translateX(0)';
@@ -45,11 +45,11 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularitySc
         }, 200);
       }
     }
-    
+
     if (cardRef.current) {
       cardRef.current.style.transform = 'translateX(0)';
     }
-    
+
     setStartX(null);
     setCurrentX(null);
     setIsDragging(false);
@@ -64,13 +64,32 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularitySc
 
   const popularity = getPopularityLevel(popularityScore);
 
+  // Animation flash verte simple lors de l'ajout
+  useEffect(() => {
+    let timer;
+    if (isAdded) {
+      timer = setTimeout(() => setIsAdded(false), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [isAdded]);
+
+  const handleClick = () => {
+    if (!isDragging && onAdd) {
+      setIsAdded(true);
+      onAdd(drink);
+    }
+  };
+
   return (
-    <Card 
+    <Card
       ref={cardRef}
-      className="hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative touch-manipulation"
+      className={`hover:shadow-md transition-all duration-200 hover:-translate-y-1 relative touch-manipulation cursor-pointer ${
+        isAdded ? 'bg-green-100 dark:bg-green-900' : 'bg-white dark:bg-gray-800'
+      }`}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onClick={handleClick}
     >
       <CardContent className="p-3">
         <div className="flex justify-between items-start mb-2">
@@ -91,44 +110,37 @@ const DrinkCard = ({ drink, onAdd, categoryColor, onEdit, onDelete, popularitySc
             </div>
             <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{drink.price.toFixed(2)}€</p>
           </div>
-          
-          <div className="flex items-center gap-1">
-            <Badge className={`${categoryColor} border-0 text-xs dark:bg-opacity-80`}>
-              {drink.available ? 'Dispo' : 'Indispo'}
-            </Badge>
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 dark:hover:bg-gray-700">
-                  <Edit className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
-                <DropdownMenuItem onClick={() => onEdit(drink, 'edit')} className="dark:hover:bg-gray-700">
-                  <Edit className="w-3 h-3 mr-2" />
-                  Modifier
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => onDelete(drink)}
-                  className="text-red-600 focus:text-red-600 dark:text-red-400"
-                >
-                  <Trash2 className="w-3 h-3 mr-2" />
-                  Supprimer
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+
+          {/* Menu contextuel */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 dark:hover:bg-gray-700"
+                onClick={(e) => e.stopPropagation()} // empêcher le clic d'ajout
+              >
+                <Edit className="w-3 h-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+              <DropdownMenuItem
+                onClick={(e) => { e.stopPropagation(); onEdit(drink, 'edit'); }}
+                className="dark:hover:bg-gray-700"
+              >
+                <Edit className="w-3 h-3 mr-2" />
+                Modifier
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={(e) => { e.stopPropagation(); onDelete(drink); }}
+                className="text-red-600 focus:text-red-600 dark:text-red-400"
+              >
+                <Trash2 className="w-3 h-3 mr-2" />
+                Supprimer
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        
-        <Button 
-          onClick={() => onAdd(drink)}
-          disabled={!drink.available}
-          className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0 text-xs h-7 touch-manipulation"
-          size="sm"
-        >
-          <Plus className="w-3 h-3 mr-1" />
-          Ajouter
-        </Button>
       </CardContent>
     </Card>
   );

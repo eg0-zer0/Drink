@@ -3,13 +3,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Switch } from './ui/switch';
 
 const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
   const [formData, setFormData] = useState({
     name: '',
     price: '',
-    available: true,
   });
 
   useEffect(() => {
@@ -17,7 +15,6 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
       setFormData({
         name: drink.name || '',
         price: drink.price?.toString() || '',
-        available: drink.available !== undefined ? drink.available : true,
       });
     }
   }, [drink]);
@@ -29,7 +26,6 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
         ...drink,
         name: formData.name,
         price: parseFloat(formData.price),
-        available: formData.available,
       });
       onClose();
     }
@@ -45,7 +41,9 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Nom de la boisson */}
           <div className="space-y-2">
             <Label htmlFor="name">Nom de la boisson</Label>
             <Input
@@ -56,7 +54,8 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
               required
             />
           </div>
-          
+
+          {/* Prix */}
           <div className="space-y-2">
             <Label htmlFor="price">Prix (€)</Label>
             <Input
@@ -70,16 +69,8 @@ const EditDrinkModal = ({ drink, isOpen, onClose, onSave, mode = 'edit' }) => {
               required
             />
           </div>
-          
-          <div className="flex items-center justify-between">
-            <Label htmlFor="available">Disponible</Label>
-            <Switch
-              id="available"
-              checked={formData.available}
-              onCheckedChange={(checked) => setFormData({ ...formData, available: checked })}
-            />
-          </div>
-          
+
+          {/* Boutons */}
           <div className="flex justify-end gap-3">
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
