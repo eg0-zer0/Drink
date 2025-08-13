@@ -8,15 +8,20 @@ const InstallPrompt = () => {
   const { isInstallable, installApp, isInstalled } = usePWA();
   const [showPrompt, setShowPrompt] = React.useState(false);
 
-  React.useEffect(() => {
-    if (isInstallable && !isInstalled) {
-      const timer = setTimeout(() => {
-        setShowPrompt(true);
-      }, 30000); // Afficher après 30 secondes
-      
-      return () => clearTimeout(timer);
-    }
-  }, [isInstallable, isInstalled]);
+React.useEffect(() => {
+  // AVANT : Affichage après 30 secondes
+  // if (isInstallable && !isInstalled) {
+  //   const timer = setTimeout(() => {
+  //     setShowPrompt(true);
+  //   }, 30000);
+  //   return () => clearTimeout(timer);
+  // }
+
+  // APRÈS : Affichage immédiat si installable et pas installé
+  if (isInstallable && !isInstalled) {
+    setShowPrompt(true);
+  }
+}, [isInstallable, isInstalled]);
 
   const handleInstall = async () => {
     const success = await installApp();

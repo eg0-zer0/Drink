@@ -1,16 +1,18 @@
 import React from 'react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
+import { ArrowUpDown, TrendingUp, DollarSign, ArrowDownAZ, Layers3 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
-import { ArrowUpDown, TrendingUp, DollarSign, AlphabeticallyIcon } from 'lucide-react';
 
 const SortControls = ({ sortBy, onSortChange }) => {
-  const sortOptions = [
-    { value: 'name', label: 'Alphabétique', icon: AlphabeticallyIcon },
-    { value: 'popularity', label: 'Popularité', icon: TrendingUp },
-    { value: 'price-asc', label: 'Prix ↗', icon: DollarSign },
-    { value: 'price-desc', label: 'Prix ↘', icon: DollarSign },
-  ];
+const sortOptions = [
+  { value: 'default', label: 'Par Catégorie', icon: Layers3 }, // icône réelle importée
+  { value: 'name', label: 'Alphabétique', icon: ArrowDownAZ },
+  { value: 'popularity', label: 'Popularité', icon: TrendingUp },
+  { value: 'price-asc', label: 'Prix ↗', icon: DollarSign },
+  { value: 'price-desc', label: 'Prix ↘', icon: DollarSign },
+];
+
 
   const currentSort = sortOptions.find(option => option.value === sortBy);
 
@@ -26,8 +28,8 @@ const SortControls = ({ sortBy, onSortChange }) => {
         {sortOptions.map((option) => {
           const Icon = option.icon;
           return (
-            <DropdownMenuItem 
-              key={option.value} 
+            <DropdownMenuItem
+              key={option.value}
               onClick={() => onSortChange(option.value)}
               className={sortBy === option.value ? 'bg-accent' : ''}
             >
