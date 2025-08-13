@@ -1,44 +1,71 @@
+// React & routing
 import React, { useState, useMemo } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+
+// Contexts & hooks
 import { ThemeProvider } from './contexts/ThemeContext';
-import { Button } from './components/ui/button';
-import { Plus } from 'lucide-react';
-import { Toaster } from './components/ui/sonner';
 import { useToast } from './hooks/use-toast';
-import { mockCategories, mockOrderHistory } from './mock';
-import { generateDrinkId } from './utils/id';
+
+// UI components
+import { Button } from './components/ui/button';
+import { Toaster } from './components/ui/sonner';
+import { Plus } from 'lucide-react';
+
+// App components
 import Header from './components/Header';
 import CategorySection from './components/CategorySection';
 import OrderSummary from './components/OrderSummary';
 import OrderHistory from './components/OrderHistory';
+import ConfirmOrderModal from './components/ConfirmOrderModal';
 import EditDrinkModal from './components/EditDrinkModal';
 import EditCategoryModal from './components/EditCategoryModal';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import SortControls from './components/SortControls';
 import InstallBanner from './components/InstallBanner';
 import InstallPrompt from './components/InstallPrompt';
+
+// Data & utils
+import { mockCategories, mockOrderHistory } from './mock';
+import { generateDrinkId } from './utils/id';
+
+// Styles
 import './App.css';
 
+
+// ==========================
+//      COMPOSANT PRINCIPAL
+// ==========================
 const DrinkOrderApp = () => {
   const { toast } = useToast();
 
-  const [categories, setCategories] = useState(mockCategories);
-  const [orders, setOrders] = useState([]);
-  const [orderHistory, setOrderHistory] = useState(mockOrderHistory);
-  const [sortBy, setSortBy] = useState('name');
+  // ---- ÉTATS ----
+  const [categories, setCategories] = useState(mockCategories); // liste des catégories et boissons
+  const [orders, setOrders] = useState([]); // panier actuel
+  const [orderHistory, setOrderHistory] = useState(mockOrderHistory); // historique des commandes
+  const [sortBy, setSortBy] = useState('name'); // critère de tri
+  const [soundEnabled, setSoundEnabled] = useState(true); // activation/désactivation du son
+  const [compactMode, setCompactMode] = useState(false); // 🆕 affichage compact ou large
+  const [showHistory, setShowHistory] = useState(false); // 🆕 modal historique
+  const [showConfirmModal, setShowConfirmModal] = useState(false); // 🆕 modal recap commande
 
+  // États pour les modals d'édition/suppression
   const [editDrinkModal, setEditDrinkModal] = useState({ isOpen: false, drink: null, categoryId: null, mode: 'edit' });
   const [editCategoryModal, setEditCategoryModal] = useState({ isOpen: false, category: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, type: null, item: null, categoryId: null });
 
-  // Popularité depuis l’historique
+  // ==========================
+  //  CALCULS MÉMOS
+  // ==========================
+  // Table de popularité calculée à partir de l'historique
   const drinkPopularity = useMemo(() => {
     const popularity = {};
+    // Compter par nom
     orderHistory.forEach(order => {
       order.items.forEach(item => {
         popularity[item.drinkName] = (popularity[item.drinkName] || 0) + item.quantity;
       });
     });
+    // Mapper par ID
     const byId = {};
     categories.forEach(c => {
       c.drinks.forEach(d => {
@@ -48,38 +75,39 @@ const DrinkOrderApp = () => {
     return byId;
   }, [orderHistory, categories]);
 
-  // Tri
+  // ==========================
+  //  TRI DES BOISSONS
+  // ==========================
   const sortDrinks = (drinks, sortBy) => {
     const sorted = [...drinks];
     switch (sortBy) {
-      case 'popularity': return sorted.sort((a, b) => (drinkPopularity[b.id] || 0) - (drinkPopularity[a.id] || 0));
-      case 'price-asc': return sorted.sort((a, b) => a.price - b.price);
-      case 'price-desc': return sorted.sort((a, b) => b.price - a.price);
+      case 'popularity':
+        return sorted.sort((a, b) => (drinkPopularity[b.id] || 0) - (drinkPopularity[a.id] || 0));
+      case 'price-asc':
+        return sorted.sort((a, b) => a.price - b.price);
+      case 'price-desc':
+        return sorted.sort((a, b) => b.price - a.price);
       case 'name':
-      default: return sorted.sort((a, b) => a.name.localeCompare(b.name));
+      default:
+        return sorted.sort((a, b) => a.name.localeCompare(b.name));
     }
   };
 
+  // Renvoie les catégories avec boissons triées selon le critère
   const getSortedCategories = () => {
     if (sortBy === 'default') return categories;
-    if (sortBy === 'name') {
+    if (sortBy === 'name' || sortBy === 'popularity') {
       return categories.map(c => ({
         ...c,
-        drinks: [...c.drinks].sort((a, b) => a.name.localeCompare(b.name))
-      }));
-    }
-    if (sortBy === 'popularity') {
-      return categories.map(c => ({
-        ...c,
-        drinks: [...c.drinks].sort(
-          (a, b) => (drinkPopularity[b.id] || 0) - (drinkPopularity[a.id] || 0)
-        )
+        drinks: sortDrinks(c.drinks, sortBy)
       }));
     }
     return categories;
   };
 
-  // Gestion commandes
+  // ==========================
+  //  GESTION PANIER
+  // ==========================
   const handleAddDrink = (drink) => {
     const idx = orders.findIndex(order => order.drinkId === drink.id);
     if (idx >= 0) {
@@ -113,8 +141,14 @@ const DrinkOrderApp = () => {
     toast({ title: "Commande vidée", description: "Toutes les commandes ont été supprimées" });
   };
 
-  const handleConfirmOrder = () => {
+  // Ouvre le recap avant validation
+  const handleConfirmOrderClick = () => {
     if (!orders.length) return;
+    setShowConfirmModal(true);
+  };
+
+  // Validation finale de commande
+  const finalizeOrder = () => {
     const total = orders.reduce((sum, o) => sum + o.price * o.quantity, 0);
     const newOrder = {
       id: `order-${Date.now()}`,
@@ -124,10 +158,13 @@ const DrinkOrderApp = () => {
     };
     setOrderHistory([newOrder, ...orderHistory]);
     setOrders([]);
+    setShowConfirmModal(false);
     toast({ title: "Commande confirmée", description: `Total: ${total.toFixed(2)}€` });
   };
 
-  // Gestion catégories / boissons
+  // ==========================
+  //  GESTION CATEGORIES / BOISSONS
+  // ==========================
   const handleToggleCategory = (id) => {
     setCategories(categories.map(c => c.id === id ? { ...c, isCollapsed: !c.isCollapsed } : c));
   };
@@ -148,7 +185,7 @@ const DrinkOrderApp = () => {
       c.id === categoryId ? { ...c, drinks: c.drinks.filter(d => d.id !== item.id) } : c
     ));
     setDeleteDialog({ isOpen: false, type: null, item: null, categoryId: null });
-    toast({ title: "Boisson supprimée", description: `${item.name} a été retiré du menu` });
+    toast({ title: "Boisson supprimée", description: `${item.name} a été retirée du menu` });
   };
 
   const handleSaveDrink = (updated) => {
@@ -194,12 +231,23 @@ const DrinkOrderApp = () => {
 
   const handleAddCategory = () => setEditCategoryModal({ isOpen: true, category: { name: '', icon: '' } });
 
+  // ==========================
+  //  RENDU JSX
+  // ==========================
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <Header />
+        {/* HEADER avec menu hamburger */}
+        <Header
+          soundEnabled={soundEnabled}
+          onToggleSound={() => setSoundEnabled(s => !s)}
+          compactMode={compactMode}
+          onToggleCompact={() => setCompactMode(c => !c)}
+          onShowHistory={() => setShowHistory(true)}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Colonne catégories */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <h2 className="text-2xl font-bold">Menu des Boissons</h2>
@@ -224,34 +272,38 @@ const DrinkOrderApp = () => {
                 onDeleteDrink={handleDeleteDrink}
                 sortedDrinks={sortDrinks(c.drinks, sortBy)}
                 drinkPopularity={drinkPopularity}
+                orders={orders}
+                soundEnabled={soundEnabled}
+                compactMode={compactMode} // 🆕
               />
             ))}
           </div>
 
+          {/* Colonne Summary Desktop */}
           <div className="lg:col-span-1 space-y-6 hidden lg:block">
             <OrderSummary
               orders={orders}
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}
               onClearAll={handleClearAll}
-              onConfirmOrder={handleConfirmOrder}
+              onConfirmOrder={handleConfirmOrderClick}
             />
-            <OrderHistory orderHistory={orderHistory} />
           </div>
         </div>
 
+        {/* Summary Mobile */}
         <div className="lg:hidden">
           <OrderSummary
             orders={orders}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             onClearAll={handleClearAll}
-            onConfirmOrder={handleConfirmOrder}
+            onConfirmOrder={handleConfirmOrderClick}
           />
         </div>
       </div>
 
-      {/* Modals */}
+      {/* === Modals === */}
       <EditDrinkModal {...editDrinkModal} onClose={() => setEditDrinkModal({ isOpen: false, drink: null, categoryId: null, mode: 'edit' })} onSave={handleSaveDrink} />
       <EditCategoryModal {...editCategoryModal} onClose={() => setEditCategoryModal({ isOpen: false, category: null })} onSave={handleSaveCategory} />
       <DeleteConfirmDialog
@@ -263,11 +315,34 @@ const DrinkOrderApp = () => {
           ? `Êtes-vous sûr de vouloir supprimer "${deleteDialog.item?.name}" ?`
           : `Supprimer "${deleteDialog.item?.name}" supprimera aussi ${deleteDialog.item?.drinks?.length || 0} boissons.`}
       />
+
+      {/* Modal Historique */}
+      {showHistory && (
+        <OrderHistory
+          orderHistory={orderHistory}
+          isOpen={showHistory}
+          onClose={() => setShowHistory(false)}
+        />
+      )}
+
+      {/* Modal Récapitulatif Commande */}
+      {showConfirmModal && (
+        <ConfirmOrderModal
+          isOpen={showConfirmModal}
+          onClose={() => setShowConfirmModal(false)}
+          orders={orders}
+          onConfirm={finalizeOrder}
+        />
+      )}
+
       <Toaster />
     </div>
   );
 };
 
+// ==========================
+//  ROUTAGE PRINCIPAL
+// ==========================
 function App() {
   return (
     <ThemeProvider>
