@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { usePWA } from '../hooks/usePWA';
-import { Download, Menu, Volume2, VolumeX, Layout, History, Sun, Moon } from 'lucide-react';
+import { Download, Menu, Volume2, VolumeX, Layout, History, Sun, Moon, Home } from 'lucide-react';
 import { Button } from './ui/button';
 import { useTheme } from '../contexts/ThemeContext';
+import { useNavigate } from 'react-router-dom';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,8 +21,9 @@ const Header = ({
 }) => {
   const { isInstallable, isInstalled, installApp } = usePWA();
   const { isDark, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
-  // État d'ouverture du menu pour gestion fermeture automatique
+  // État d'ouverture du menu pour fermeture automatique
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -39,6 +41,7 @@ const Header = ({
 
         {/* Boutons/menu à droite */}
         <div className="ml-4 flex items-center gap-3">
+          {/* Bouton installation PWA */}
           {isInstallable && !isInstalled && (
             <Button
               onClick={installApp}
@@ -60,6 +63,20 @@ const Header = ({
             </DropdownMenuTrigger>
 
             <DropdownMenuContent align="end" className="dark:bg-gray-800 dark:border-gray-700">
+              {/* Lien vers l'accueil */}
+              <DropdownMenuItem
+                onClick={() => {
+                  navigate('/');
+                  setMenuOpen(false);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Retour à l’accueil
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="my-2 h-px bg-gray-300 dark:bg-gray-600" />
+
               {/* Toggle du son */}
               <DropdownMenuItem asChild>
                 <button
@@ -105,7 +122,7 @@ const Header = ({
                 </button>
               </DropdownMenuItem>
 
-              {/* Séparateur visuel bien visible */}
+              {/* Séparateur */}
               <DropdownMenuSeparator className="my-2 h-px bg-gray-300 dark:bg-gray-600" />
 
               {/* Historique */}
