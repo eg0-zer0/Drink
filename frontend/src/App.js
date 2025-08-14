@@ -23,6 +23,7 @@ import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import SortControls from './components/SortControls';
 import InstallBanner from './components/InstallBanner';
 import InstallPrompt from './components/InstallPrompt';
+import LandingPage from './components/LandingPage'; // Page d'accueil
 
 // Data & utils
 import { mockCategories, mockOrderHistory } from './mock';
@@ -34,33 +35,13 @@ import './App.css';
 const DrinkOrderApp = () => {
   const { toast } = useToast();
 
-  // ---- ÉTATS AVEC PERSISTENCE ----
-  const [categories, setCategories] = useState(() => {
-    const saved = localStorage.getItem('categories');
-    return saved ? JSON.parse(saved) : mockCategories;
-  });
-
-  const [orders, setOrders] = useState(() => {
-    const saved = localStorage.getItem('orders');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [orderHistory, setOrderHistory] = useState(() => {
-    const saved = localStorage.getItem('orderHistory');
-    return saved ? JSON.parse(saved) : mockOrderHistory;
-  });
-
+  // === États persistants ===
+  const [categories, setCategories] = useState(() => JSON.parse(localStorage.getItem('categories')) || mockCategories);
+  const [orders, setOrders] = useState(() => JSON.parse(localStorage.getItem('orders')) || []);
+  const [orderHistory, setOrderHistory] = useState(() => JSON.parse(localStorage.getItem('orderHistory')) || mockOrderHistory);
   const [sortBy, setSortBy] = useState('name');
-
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem('soundEnabled');
-    return saved ? JSON.parse(saved) : true;
-  });
-
-  const [compactMode, setCompactMode] = useState(() => {
-    const saved = localStorage.getItem('compactMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [soundEnabled, setSoundEnabled] = useState(() => JSON.parse(localStorage.getItem('soundEnabled')) ?? true);
+  const [compactMode, setCompactMode] = useState(() => JSON.parse(localStorage.getItem('compactMode')) ?? false);
 
   const [showHistory, setShowHistory] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -70,41 +51,23 @@ const DrinkOrderApp = () => {
   const [editCategoryModal, setEditCategoryModal] = useState({ isOpen: false, category: null });
   const [deleteDialog, setDeleteDialog] = useState({ isOpen: false, type: null, item: null, categoryId: null });
 
-  // ==== Sauvegarde automatique ====
-  useEffect(() => {
-    localStorage.setItem('categories', JSON.stringify(categories));
-  }, [categories]);
+  // Sauvegarde auto
+  useEffect(() => { localStorage.setItem('categories', JSON.stringify(categories)); }, [categories]);
+  useEffect(() => { localStorage.setItem('orders', JSON.stringify(orders)); }, [orders]);
+  useEffect(() => { localStorage.setItem('orderHistory', JSON.stringify(orderHistory)); }, [orderHistory]);
+  useEffect(() => { localStorage.setItem('soundEnabled', JSON.stringify(soundEnabled)); }, [soundEnabled]);
+  useEffect(() => { localStorage.setItem('compactMode', JSON.stringify(compactMode)); }, [compactMode]);
 
-  useEffect(() => {
-    localStorage.setItem('orders', JSON.stringify(orders));
-  }, [orders]);
-
-  useEffect(() => {
-    localStorage.setItem('orderHistory', JSON.stringify(orderHistory));
-  }, [orderHistory]);
-
-  useEffect(() => {
-    localStorage.setItem('soundEnabled', JSON.stringify(soundEnabled));
-  }, [soundEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('compactMode', JSON.stringify(compactMode));
-  }, [compactMode]);
-
-  // ==== Popularité ====
+  // Popularité via historique
   const drinkPopularity = useMemo(() => {
     const popularity = {};
-    orderHistory.forEach(order => {
+    orderHistory.forEach(order =>
       order.items.forEach(item => {
         popularity[item.drinkName] = (popularity[item.drinkName] || 0) + item.quantity;
-      });
-    });
+      })
+    );
     const byId = {};
-    categories.forEach(c => {
-      c.drinks.forEach(d => {
-        byId[d.id] = popularity[d.name] || 0;
-      });
-    });
+    categories.forEach(c => c.drinks.forEach(d => { byId[d.id] = popularity[d.name] || 0; }));
     return byId;
   }, [orderHistory, categories]);
 
@@ -120,132 +83,80 @@ const DrinkOrderApp = () => {
     }
   };
 
-  const getSortedCategories = () => {
-    if (sortBy === 'default') return categories;
-    if (sortBy === 'name' || sortBy === 'popularity') {
-      return categories.map(c => ({ ...c, drinks: sortDrinks(c.drinks, sortBy) }));
-    }
-    return categories;
-  };
+  const getSortedCategories = () =>
+    (sortBy === 'default') ? categories :
+      categories.map(c => ({ ...c, drinks: sortDrinks(c.drinks, sortBy) }));
 
-  // ====== Gestion Panier ======
+  // === Gestion panier ===
   const handleAddDrink = (drink) => {
-    const idx = orders.findIndex(order => order.drinkId === drink.id);
-    if (idx >= 0) {
-      const updated = [...orders];
-      updated[idx].quantity += 1;
-      setOrders(updated);
-    } else {
-      setOrders([...orders, {
-        drinkId: drink.id, drinkName: drink.name, price: drink.price,
-        quantity: 1, addedAt: new Date().toISOString()
-      }]);
-    }
+    setOrders(prev => {
+      const idx = prev.findIndex(o => o.drinkId === drink.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx].quantity += 1;
+        return updated;
+      } else {
+        return [...prev, { drinkId: drink.id, drinkName: drink.name, price: drink.price, quantity: 1, addedAt: new Date().toISOString() }];
+      }
+    });
     toast({ title: "Boisson ajoutée", description: `${drink.name} ajouté à la commande` });
   };
-
-  const handleUpdateQuantity = (drinkId, qty) => {
-    if (qty <= 0) return handleRemoveItem(drinkId);
-    setOrders(orders.map(o => o.drinkId === drinkId ? { ...o, quantity: qty } : o));
-  };
-
-  const handleRemoveItem = (drinkId) => {
-    setOrders(orders.filter(o => o.drinkId !== drinkId));
-    toast({ title: "Article supprimé", description: "L'article a été retiré" });
-  };
-
-  const handleClearAll = () => {
-    setOrders([]);
-    toast({ title: "Commande vidée", description: "Toutes les commandes ont été supprimées" });
-  };
-
-  const handleConfirmOrderClick = () => {
-    if (!orders.length) return;
-    setShowConfirmModal(true);
-  };
-
+  const handleUpdateQuantity = (id, qty) => qty <= 0 ? handleRemoveItem(id) : setOrders(o => o.map(i => i.drinkId === id ? { ...i, quantity: qty } : i));
+  const handleRemoveItem = id => { setOrders(o => o.filter(i => i.drinkId !== id)); toast({ title: "Article supprimé", description: "L'article a été retiré" }); };
+  const handleClearAll = () => { setOrders([]); toast({ title: "Commande vidée", description: "Toutes les commandes ont été supprimées" }); };
+  const handleConfirmOrderClick = () => orders.length && setShowConfirmModal(true);
   const finalizeOrder = () => {
     const total = orders.reduce((sum, o) => sum + o.price * o.quantity, 0);
-    const newOrder = {
-      id: `order-${Date.now()}`,
-      date: new Date().toISOString(),
-      items: orders.map(o => ({ drinkName: o.drinkName, quantity: o.quantity, price: o.price })),
-      total
-    };
-    setOrderHistory([newOrder, ...orderHistory]);
-    setOrders([]);
-    setShowConfirmModal(false);
+    const newOrder = { id: `order-${Date.now()}`, date: new Date().toISOString(), items: orders.map(o => ({ drinkName: o.drinkName, quantity: o.quantity, price: o.price })), total };
+    setOrderHistory([newOrder, ...orderHistory]); setOrders([]); setShowConfirmModal(false);
     toast({ title: "Commande confirmée", description: `Total: ${total.toFixed(2)}€` });
   };
 
-  // ====== Gestion Catégories ======
-  const handleToggleCategory = (id) => {
-    setCategories(categories.map(c => c.id === id ? { ...c, isCollapsed: !c.isCollapsed } : c));
-  };
-
+  // === Gestion catégories ===
+  const handleToggleCategory = id => setCategories(cats => cats.map(c => c.id === id ? { ...c, isCollapsed: !c.isCollapsed } : c));
   const handleEditDrink = (drink, mode = 'edit') => {
     const cat = categories.find(c => c.drinks.some(d => d.id === drink.id));
     setEditDrinkModal({ isOpen: true, drink, categoryId: cat?.id, mode });
   };
-
-  const handleDeleteDrink = (drink) => {
+  const handleDeleteDrink = drink => {
     const cat = categories.find(c => c.drinks.some(d => d.id === drink.id));
     setDeleteDialog({ isOpen: true, type: 'drink', item: drink, categoryId: cat?.id });
   };
-
   const confirmDeleteDrink = () => {
     const { item, categoryId } = deleteDialog;
-    setCategories(categories.map(c =>
-      c.id === categoryId ? { ...c, drinks: c.drinks.filter(d => d.id !== item.id) } : c
-    ));
+    setCategories(cats => cats.map(c => c.id === categoryId ? { ...c, drinks: c.drinks.filter(d => d.id !== item.id) } : c));
     setDeleteDialog({ isOpen: false, type: null, item: null, categoryId: null });
     toast({ title: "Boisson supprimée", description: `${item.name} a été retirée du menu` });
   };
-
-  const handleSaveDrink = (updated) => {
+  const handleSaveDrink = updated => {
     if (editDrinkModal.mode === 'add') {
-      setCategories(categories.map(c =>
-        c.id === editDrinkModal.categoryId
-          ? { ...c, drinks: [...c.drinks, { ...updated, id: generateDrinkId(updated.name, c.id) }] }
-          : c
-      ));
+      setCategories(cats => cats.map(c => c.id === editDrinkModal.categoryId ? { ...c, drinks: [...c.drinks, { ...updated, id: generateDrinkId(updated.name, c.id) }] } : c));
       toast({ title: "Boisson ajoutée", description: `${updated.name} ajouté au menu` });
     } else {
-      setCategories(categories.map(c => ({
-        ...c,
-        drinks: c.drinks.map(d => d.id === updated.id ? updated : d)
-      })));
+      setCategories(cats => cats.map(c => ({ ...c, drinks: c.drinks.map(d => d.id === updated.id ? updated : d) })));
       toast({ title: "Boisson modifiée", description: `${updated.name} modifiée` });
     }
   };
-
-  const handleAddDrinkToCategory = (categoryId) => {
-    setEditDrinkModal({ isOpen: true, drink: { id: '', name: '', price: 0 }, categoryId, mode: 'add' });
-  };
-
-  const handleEditCategory = (cat) => setEditCategoryModal({ isOpen: true, category: cat });
-  const handleDeleteCategory = (cat) => setDeleteDialog({ isOpen: true, type: 'category', item: cat });
-
+  const handleAddDrinkToCategory = categoryId => setEditDrinkModal({ isOpen: true, drink: { id: '', name: '', price: 0 }, categoryId, mode: 'add' });
+  const handleEditCategory = cat => setEditCategoryModal({ isOpen: true, category: cat });
+  const handleDeleteCategory = cat => setDeleteDialog({ isOpen: true, type: 'category', item: cat });
   const confirmDeleteCategory = () => {
     const cat = deleteDialog.item;
-    setCategories(categories.filter(c => c.id !== cat.id));
+    setCategories(cats => cats.filter(c => c.id !== cat.id));
     setDeleteDialog({ isOpen: false, type: null, item: null });
     toast({ title: "Catégorie supprimée", description: `${cat.name} supprimée` });
   };
-
-  const handleSaveCategory = (cat) => {
+  const handleSaveCategory = cat => {
     if (categories.some(c => c.id === cat.id)) {
-      setCategories(categories.map(c => c.id === cat.id ? cat : c));
+      setCategories(cats => cats.map(c => c.id === cat.id ? cat : c));
       toast({ title: "Catégorie modifiée", description: `${cat.name} mise à jour` });
     } else {
-      setCategories([...categories, { ...cat, id: `cat-${Date.now()}`, drinks: [], isCollapsed: false }]);
+      setCategories(cats => [...cats, { ...cat, id: `cat-${Date.now()}`, drinks: [], isCollapsed: false }]);
       toast({ title: "Catégorie ajoutée", description: `${cat.name} créée` });
     }
   };
-
   const handleAddCategory = () => setEditCategoryModal({ isOpen: true, category: { name: '', icon: '' } });
 
-  // ====== Rendu ======
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -268,7 +179,6 @@ const DrinkOrderApp = () => {
                 </Button>
               </div>
             </div>
-
             {getSortedCategories().map(c => (
               <CategorySection
                 key={c.id}
@@ -288,7 +198,6 @@ const DrinkOrderApp = () => {
               />
             ))}
           </div>
-
           <div className="lg:col-span-1 space-y-6 hidden lg:block">
             <OrderSummary
               orders={orders}
@@ -299,7 +208,6 @@ const DrinkOrderApp = () => {
             />
           </div>
         </div>
-
         <div className="lg:hidden">
           <OrderSummary
             orders={orders}
@@ -322,36 +230,22 @@ const DrinkOrderApp = () => {
           ? `Êtes-vous sûr de vouloir supprimer "${deleteDialog.item?.name}" ?`
           : `Supprimer "${deleteDialog.item?.name}" supprimera aussi ${deleteDialog.item?.drinks?.length || 0} boissons.`}
       />
-
-      {showHistory && (
-        <OrderHistory
-          orderHistory={orderHistory}
-          isOpen={showHistory}
-          onClose={() => setShowHistory(false)}
-        />
-      )}
-
-      {showConfirmModal && (
-        <ConfirmOrderModal
-          isOpen={showConfirmModal}
-          onClose={() => setShowConfirmModal(false)}
-          orders={orders}
-          onConfirm={finalizeOrder}
-        />
-      )}
-
+      {showHistory && <OrderHistory orderHistory={orderHistory} isOpen={showHistory} onClose={() => setShowHistory(false)} />}
+      {showConfirmModal && <ConfirmOrderModal isOpen={showConfirmModal} onClose={() => setShowConfirmModal(false)} orders={orders} onConfirm={finalizeOrder} />}
       <Toaster />
     </div>
   );
 };
 
+// === Routage avec Landing ===
 function App() {
   return (
     <ThemeProvider>
       <BrowserRouter>
         <InstallBanner />
         <Routes>
-          <Route path="/" element={<DrinkOrderApp />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/app" element={<DrinkOrderApp />} />
         </Routes>
         <InstallPrompt />
         <Toaster />
